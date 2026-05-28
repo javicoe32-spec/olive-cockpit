@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olive&Co - SAP Executive Cockpit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F5F4;color:#1C1C1C}
+.nav{display:flex;align-items:center;gap:6px;padding:9px 20px;background:#fff;border-bottom:1px solid #E8E8E8;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.logo{font-size:14px;font-weight:700}.logo b{color:#C0272D}
+.nbtn{padding:6px 12px;font-size:12px;border-radius:8px;border:1px solid transparent;background:transparent;color:#666;cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-family:inherit}
+.nbtn:hover{background:#F5F5F4;color:#1C1C1C}
+.nbtn.on{background:#fff;border-color:#C0272D;color:#C0272D;font-weight:700}
+.nbtn.ext{background:#4A6741;color:#fff;border-color:#4A6741}
+.main{max-width:1100px;margin:0 auto;padding:20px}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.br{background:#FCEBEB;color:#A32D2D}.ba{background:#FAEEDA;color:#854F0B}
+.bg{background:#EAF3DE;color:#3B6D11}.bb{background:#E6F1FB;color:#185FA5}.bx{background:#F1EFE8;color:#5F5E5A}
+.card{background:#fff;border:1px solid #E8E8E8;border-radius:12px;padding:16px 18px}
+.kpi{background:#F5F5F4;border-radius:8px;padding:11px 14px}
+.kpi-l{font-size:11px;color:#888;margin-bottom:1px}
+.kpi-v{font-size:22px;font-weight:700;line-height:1.2}
+.kpi-s{font-size:11px;margin-top:2px}
+.up{color:#3B6D11}.dn{color:#A32D2D}
+.st{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.tbl{width:100%;font-size:12px;border-collapse:collapse}
+.tbl th{text-align:left;padding:6px 8px;font-weight:700;color:#888;border-bottom:1px solid #E8E8E8;font-size:11px}
+.tbl td{padding:7px 8px;border-bottom:1px solid #F2F2F2}
+.tbl tr:hover td{background:#FAFAF9}
+.seg{padding:5px 12px;font-size:12px;border-radius:8px;border:1px solid #E0E0E0;background:#fff;color:#666;cursor:pointer;font-family:inherit}
+.seg.on{background:#1C1C1C;color:#fff;border-color:#1C1C1C;font-weight:700}
+.baro{height:5px;background:#E8E8E8;border-radius:3px;overflow:hidden;margin-top:4px}
+.bari{height:5px;border-radius:3px}
+.ar{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #F0F0F0}
+.ar:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px;display:inline-block}
+.disc{padding:8px 12px;background:#FAEEDA;border-radius:8px;font-size:11px;color:#854F0B;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="logo"><b>SAP</b> Executive Cockpit &middot; Olive&Co</div>
+  <div style="flex:1"></div>
+  <button class="nbtn on" id="b-home" onclick="setTab('home')">Dashboard</button>
+  <button class="nbtn" id="b-pl" onclick="setTab('pl')">P&L</button>
+  <button class="nbtn" id="b-skus" onclick="setTab('skus')">Margen SKU</button>
+  <button class="nbtn" id="b-bridge" onclick="setTab('bridge')">EBITDA bridge</button>
+  <button class="nbtn" id="b-alerts" onclick="setTab('alerts')">Alertas <span style="background:#E24B4A;color:#fff;border-radius:10px;padding:0 5px;font-size:10px">2</span></button>
+  <a href="market-intelligence.html" class="nbtn ext" style="margin-left:8px">Market Intelligence &rarr;</a>
+  <span class="badge bx" style="font-size:10px;margin-left:4px">Datos simulados</span>
+</nav>
+<div class="main" id="mc"></div>
+
+<script>
+var S={v:38.4,pv:37.0,mb:8.5,pmb:8.1,e:4.6,pe:4.3,mp:22.1,pmp:21.9,wc:6.2,pwc:5.8,cx:0.9};
+var I={v:22.1,pv:21.0,mb:4.2,pmb:4.0,e:2.3,pe:2.1,mp:19.0,pmp:19.0,wc:4.1,pwc:3.9,cx:0.4};
+var G={v:60.5,pv:58.0,mb:12.7,pmb:12.1,e:6.9,pe:6.4,mp:21.0,pmp:20.9,wc:10.3,pwc:9.7,cx:1.3};
+
+var SK=[
+  {k:"Manzanilla rellena 370ml",so:"Serpis",ca:"Retail ES",r:26.4,p:25.0,v:18.2,rk:"g"},
+  {k:"Nature doypack 150g",so:"Serpis",ca:"Premium Int.",r:31.2,p:29.0,v:4.1,rk:"g"},
+  {k:"Mix snack doypack 80g",so:"Serpis",ca:"Online DE/UK",r:34.1,p:32.0,v:3.7,rk:"g"},
+  {k:"Gordal alinada 500ml",so:"Serpis",ca:"Retail FR",r:22.1,p:21.5,v:6.4,rk:"g"},
+  {k:"Iberica verde 200ml",so:"IBOL",ca:"Premium UK",r:28.4,p:27.0,v:2.9,rk:"g"},
+  {k:"El Torreon 350ml PL",so:"Serpis",ca:"MDD ES",r:14.2,p:14.0,v:14.9,rk:"g"},
+  {k:"Maestro de Oliva 350ml",so:"IBOL",ca:"Retail IT",r:20.1,p:21.0,v:7.2,rk:"a"},
+  {k:"Manzanilla sin hueso 200ml",so:"IBOL",ca:"Retail MX",r:18.4,p:19.0,v:9.8,rk:"a"},
+  {k:"Negra sin hueso bulk",so:"IBOL",ca:"FoodSvc",r:12.8,p:15.0,v:22.1,rk:"r"},
+  {k:"Verde hojiblanca granel",so:"IBOL",ca:"B2B MA",r:9.1,p:12.0,v:3.3,rk:"r"}
+];
+
+var AL=[
+  {l:"r",t:"Negra sin hueso bulk: MB -2.2pp vs. presupuesto",o:"CCO + CFO",a:"Revisar precio o reducir volumen"},
+  {l:"r",t:"Verde hojiblanca granel: MB -2.9pp - riesgo destruccion margen",o:"CFO",a:"Delist o repricing urgente"},
+  {l:"a",t:"Working capital grupo +0.4M sobre objetivo",o:"CFO",a:"Reducir DSO en IBOL"},
+  {l:"a",t:"Manzanilla sin hueso MX: MB bajo objetivo -0.6pp",o:"CCO",a:"Negociar condiciones Q3"},
+  {l:"a",t:"Maestro de Oliva IT: erosion precio neto -3%",o:"CCO",a:"QBR cliente prevista julio"},
+  {l:"g",t:"Nature doypack: MB +2.2pp sobre presupuesto",o:"CCO",a:"Escalar volumen en DACH y Japon"},
+  {l:"g",t:"Mix snack online +22% vs. objetivo",o:"CCO",a:"Ampliar listings digitales"}
+];
+
+var ML={lb:["Jul","Ago","Sep","Oct","Nov","Dic","Ene","Feb","Mar","Abr","May","Jun"],
+  re:[4.8,4.6,5.1,5.3,5.6,5.8,5.2,5.4,5.7,5.9,6.1,6.9],
+  pr:[4.7,4.8,5.0,5.2,5.5,5.7,5.3,5.5,5.6,5.8,6.0,6.4]};
+
+var BR=[
+  {l:"Pricing architecture",v:1.4,t:"pos"},
+  {l:"Mix SKU mejorado",v:0.7,t:"pos"},
+  {l:"Cross-selling IBOL",v:0.6,t:"pos"},
+  {l:"OEE + mermas",v:0.5,t:"pos"},
+  {l:"Sinergias compras",v:0.4,t:"pos"},
+  {l:"Materia prima aceituna",v:-1.2,t:"neg"},
+  {l:"Energia / packaging",v:-0.4,t:"neg"},
+  {l:"Coste integracion",v:-0.3,t:"neg"}
+];
+
+var tab="home", seg="group", ch=null;
+
+function pct(a,b){return((a-b)/Math.abs(b)*100).toFixed(1);}
+function sgn(v){return v>=0?"+ ":"- ";}
+function rkcol(r){return r==="g"?"#639922":r==="a"?"#EF9F27":"#E24B4A";}
+function rkb(r){
+  return '<span class="badge '+(r==="g"?"bg":r==="a"?"ba":"br")+'">'+(r==="g"?"OK":r==="a"?"Atencion":"Alerta")+'</span>';
+}
+
+function setTab(t) {
+  tab = t;
+  var ids = ["home","pl","skus","bridge","alerts"];
+  ids.forEach(function(id){
+    var b = document.getElementById("b-"+id);
+    if(b) b.className = "nbtn" + (t===id?" on":"");
+  });
+  render();
+}
+
+function setSeg(s){seg=s;render();}
+window.setTab = setTab;
+window.setSeg = setSeg;
+
+function getD(){return seg==="serpis"?S:seg==="ibol"?I:G;}
+function getNm(){return seg==="serpis"?"Serpis":seg==="ibol"?"IBOL":"Grupo";}
+
+function render() {
+  if(ch){try{ch.destroy();}catch(e){} ch=null;}
+  var el = document.getElementById("mc");
+  if(!el) return;
+  if(tab==="home") el.innerHTML = rHome();
+  else if(tab==="pl") el.innerHTML = rPL();
+  else if(tab==="skus") el.innerHTML = rSKUs();
+  else if(tab==="bridge") el.innerHTML = rBridge();
+  else if(tab==="alerts") el.innerHTML = rAlerts();
+  if(tab==="home") setTimeout(dHome, 60);
+  if(tab==="bridge") setTimeout(dBridge, 60);
+}
+
+function rHome() {
+  var d=getD(), nm=getNm();
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">';
+  h += '<span style="font-size:15px;font-weight:700">Resumen ejecutivo</span>';
+  h += '<div style="margin-left:auto;display:flex;gap:4px">';
+  ["group","serpis","ibol"].forEach(function(s){
+    h += '<button class="seg'+(seg===s?" on":"")+'" onclick="setSeg(\''+s+'\')">'+(s==="group"?"Grupo":s==="serpis"?"Serpis":"IBOL")+'</button>';
+  });
+  h += '</div></div>';
+
+  var ks=[{l:"Ventas netas EUR M",v:d.v,p:d.pv},{l:"Margen bruto EUR M",v:d.mb,p:d.pmb},{l:"EBITDA EUR M",v:d.e,p:d.pe},{l:"MB %",v:d.mp,p:d.pmp,s:"%"}];
+  h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+  ks.forEach(function(k){
+    h += '<div class="kpi"><div class="kpi-l">'+k.l+'</div>';
+    h += '<div class="kpi-v">'+k.v.toFixed(1)+(k.s||"")+'</div>';
+    h += '<div class="kpi-s '+(k.v>=k.p?"up":"dn")+'">'+sgn(k.v-k.p)+Math.abs(pct(k.v,k.p))+'% vs. ppto</div></div>';
+  });
+  h += '</div>';
+
+  h += '<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px">';
+  h += '<div class="card"><div class="st">EBITDA mensual - Real vs. presupuesto (EUR M) - '+nm+'</div>';
+  h += '<div style="position:relative;height:200px"><canvas id="hc"></canvas></div></div>';
+
+  h += '<div class="card"><div class="st">KPIs adicionales</div>';
+  [{l:"Working capital EUR M",r:d.wc,p:d.pwc,inv:true},{l:"CAPEX EUR M",r:d.cx,p:d.cx*0.9,inv:true},{l:"MB %",r:d.mp,p:d.pmp,s:"%"}].forEach(function(k){
+    var ok = (!k.inv&&k.r>=k.p)||(k.inv&&k.r<=k.p);
+    h += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px">';
+    h += '<span style="font-size:12px;color:#888">'+k.l+'</span>';
+    h += '<span style="font-size:12px;font-weight:700">'+k.r.toFixed(1)+(k.s||"M")+' <span class="'+(ok?"up":"dn")+'">'+(ok?"V":"!")+'</span></span></div>';
+    h += '<div class="baro"><div class="bari" style="width:'+Math.min(100,k.r/k.p*100)+'%;background:'+(ok?"#639922":"#E24B4A")+'"></div></div></div>';
+  });
+
+  h += '<div class="st" style="margin-top:16px">Top alertas</div>';
+  AL.slice(0,3).forEach(function(a){
+    h += '<div style="display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid #F5F5F5;font-size:11px">';
+    h += '<span class="dot" style="background:'+(a.l==="r"?"#E24B4A":a.l==="a"?"#EF9F27":"#639922")+'"></span>';
+    h += '<span style="color:#666;line-height:1.4">'+a.t.slice(0,52)+'...</span></div>';
+  });
+  h += '<button onclick="setTab(\'alerts\')" style="margin-top:6px;font-size:11px;color:#185FA5;background:none;border:none;cursor:pointer;padding:0">Ver todas las alertas</button>';
+  h += '</div></div>';
+  return h;
+}
+
+function dHome() {
+  var ctx = document.getElementById("hc");
+  if(!ctx||typeof Chart==="undefined") return;
+  ch = new Chart(ctx, {type:"line",data:{labels:ML.lb,datasets:[
+    {label:"Real",data:ML.re,borderColor:"#C0272D",backgroundColor:"rgba(192,39,45,0.07)",borderWidth:2.5,pointRadius:3,pointBackgroundColor:"#C0272D",fill:true,tension:.35},
+    {label:"Presupuesto",data:ML.pr,borderColor:"#CCC",borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,tension:.35}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+  scales:{y:{ticks:{callback:function(v){return v.toFixed(1)+"M";},font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+}
+
+function rPL() {
+  var rows=[
+    {l:"Ventas netas",s:S.v,sp:S.pv,i:I.v,ip:I.pv,b:true},
+    {l:"  Coste MP aceituna",s:-18.2,sp:-17.6,i:-11.4,ip:-11.0},
+    {l:"  Packaging",s:-3.8,sp:-3.6,i:-2.3,ip:-2.2},
+    {l:"  Mano de obra directa",s:-4.1,sp:-4.0,i:-2.6,ip:-2.5},
+    {l:"  Energia",s:-2.1,sp:-2.0,i:-1.0,ip:-1.0},
+    {l:"  Mermas y scrap",s:-1.7,sp:-1.5,i:-0.6,ip:-0.5},
+    {l:"Margen bruto",s:S.mb,sp:S.pmb,i:I.mb,ip:I.pmb,b:true,sep:true},
+    {l:"  Gastos comerciales",s:-2.3,sp:-2.2,i:-1.1,ip:-1.0},
+    {l:"  Marketing / A&P",s:-0.8,sp:-0.8,i:-0.5,ip:-0.5},
+    {l:"  Logistica",s:-0.7,sp:-0.7,i:-0.3,ip:-0.3},
+    {l:"  SGA",s:-0.4,sp:-0.4,i:-0.1,ip:-0.1},
+    {l:"EBITDA",s:S.e,sp:S.pe,i:I.e,ip:I.pe,b:true,sep:true}
+  ];
+  var h = '<div style="font-size:15px;font-weight:700;margin-bottom:14px">P&L por sociedad - YTD jun. 2025 (EUR M)</div>';
+  h += '<div style="overflow-x:auto"><table class="tbl"><thead><tr>';
+  h += '<th style="min-width:180px">Linea P&L</th>';
+  h += '<th style="text-align:right">Serpis real</th><th style="text-align:right">ppto</th><th style="text-align:right;color:#EF9F27">Desv.</th>';
+  h += '<th style="text-align:right">IBOL real</th><th style="text-align:right">ppto</th><th style="text-align:right;color:#EF9F27">Desv.</th>';
+  h += '<th style="text-align:right;border-left:2px solid #E0E0E0">Grupo</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var sd=(r.s-r.sp).toFixed(1), id=(r.i-r.ip).toFixed(1), g=r.s+r.i, gp=r.sp+r.ip;
+    h += '<tr style="'+(r.sep?"border-top:2px solid #E0E0E0;":"")+';font-weight:'+(r.b?"700":"400")+'">';
+    h += '<td>'+r.l+'</td>';
+    h += '<td style="text-align:right">'+Math.abs(r.s).toFixed(1)+'</td>';
+    h += '<td style="text-align:right;color:#888">'+Math.abs(r.sp).toFixed(1)+'</td>';
+    h += '<td style="text-align:right;font-size:11px;color:'+(r.s>=r.sp?"#3B6D11":"#A32D2D")+'">'+(r.s>=r.sp?"+":"")+sd+'</td>';
+    h += '<td style="text-align:right">'+Math.abs(r.i).toFixed(1)+'</td>';
+    h += '<td style="text-align:right;color:#888">'+Math.abs(r.ip).toFixed(1)+'</td>';
+    h += '<td style="text-align:right;font-size:11px;color:'+(r.i>=r.ip?"#3B6D11":"#A32D2D")+'">'+(r.i>=r.ip?"+":"")+id+'</td>';
+    h += '<td style="text-align:right;font-weight:700;border-left:2px solid #E0E0E0">'+Math.abs(g).toFixed(1)+'</td>';
+    h += '<td>'+(r.b?'<span class="badge '+(g>=gp?"bg":"br")+'" style="font-size:10px">'+(g>=gp?"V":"!")+'</span>':"")+'</td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<div class="disc">Dato critico: BOM real por SKU, rendimientos de linea, absorcion de indirectos. Con SAP real el cierre es automatico.</div>';
+  return h;
+}
+
+function rSKUs() {
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  h += '<span style="font-size:15px;font-weight:700">Margen bruto por SKU vs. presupuesto</span>';
+  h += '<span class="badge br">'+SK.filter(function(s){return s.rk==="r";}).length+' alertas</span>';
+  h += '<span class="badge ba">'+SK.filter(function(s){return s.rk==="a";}).length+' atencion</span>';
+  h += '<span class="badge bg">'+SK.filter(function(s){return s.rk==="g";}).length+' OK</span></div>';
+  h += '<div class="card"><table class="tbl"><thead><tr>';
+  h += '<th>SKU</th><th>Sociedad</th><th>Canal</th>';
+  h += '<th style="text-align:right">MB% real</th><th style="text-align:right">ppto</th>';
+  h += '<th style="text-align:right">Desv.</th><th style="text-align:right">Vol EUR M</th>';
+  h += '<th>Estado</th><th style="width:90px">Visual</th></tr></thead><tbody>';
+  SK.forEach(function(s){
+    var dev = s.r - s.p;
+    h += '<tr>';
+    h += '<td style="font-weight:600">'+s.k+'</td>';
+    h += '<td><span class="badge '+(s.so==="Serpis"?"bb":"bx")+'">'+s.so+'</span></td>';
+    h += '<td style="color:#888">'+s.ca+'</td>';
+    h += '<td style="text-align:right;font-weight:700;color:'+(s.r>25?"#3B6D11":s.r>17?"#1C1C1C":"#A32D2D")+'">'+s.r.toFixed(1)+'%</td>';
+    h += '<td style="text-align:right;color:#888">'+s.p.toFixed(1)+'%</td>';
+    h += '<td style="text-align:right;font-size:11px;font-weight:700;color:'+(dev>=0?"#3B6D11":"#A32D2D")+'">'+(dev>=0?"+":"")+dev.toFixed(1)+'pp</td>';
+    h += '<td style="text-align:right">'+s.v.toFixed(1)+'</td>';
+    h += '<td>'+rkb(s.rk)+'</td>';
+    h += '<td><div class="baro"><div class="bari" style="width:'+Math.min(100,s.r/40*100)+'%;background:'+rkcol(s.rk)+'"></div></div></td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<div class="disc">Dato critico: margen calculado sin BOM real. Pendiente escandallos, rendimientos, absorcion indirectos.</div>';
+  return h;
+}
+
+function rBridge() {
+  var base = 5.8;
+  var total = base + BR.reduce(function(a,b){return a+b.v;}, 0);
+  var maxV = Math.max.apply(null, BR.map(function(b){return Math.abs(b.v);}));
+
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  h += '<span style="font-size:15px;font-weight:700">EBITDA bridge 2024 - 2025 (EUR M)</span>';
+  h += '<span class="badge bg">Objetivo EUR '+total.toFixed(1)+'M</span></div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
+  h += '<div class="kpi"><div class="kpi-l">EBITDA base 2024</div><div class="kpi-v">EUR '+base.toFixed(1)+'M</div></div>';
+  h += '<div class="kpi"><div class="kpi-l">Uplift total</div><div class="kpi-v up">+EUR '+(total-base).toFixed(1)+'M</div></div>';
+  h += '<div class="kpi"><div class="kpi-l">Objetivo 2025</div><div class="kpi-v" style="color:#3B6D11">EUR '+total.toFixed(1)+'M</div></div>';
+  h += '</div>';
+  h += '<div class="card" style="margin-bottom:14px"><div style="position:relative;height:260px"><canvas id="bc"></canvas></div></div>';
+
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  h += '<div class="card"><div class="st">Palancas positivas</div>';
+  BR.filter(function(b){return b.t==="pos";}).forEach(function(b){
+    h += '<div style="padding:5px 0;font-size:12px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between">';
+    h += '<span style="color:#666">'+b.l+'</span><span class="up" style="font-weight:700">+EUR '+b.v.toFixed(1)+'M</span></div>';
+  });
+  h += '</div><div class="card"><div class="st">Presiones</div>';
+  BR.filter(function(b){return b.t==="neg";}).forEach(function(b){
+    h += '<div style="padding:5px 0;font-size:12px;border-bottom:1px solid #F5F5F5;display:flex;justify-content:space-between">';
+    h += '<span style="color:#666">'+b.l+'</span><span class="dn" style="font-weight:700">EUR '+b.v.toFixed(1)+'M</span></div>';
+  });
+  h += '</div></div>';
+  h += '<div class="disc">Owner: CFO + Controlling. Revision mensual contra baseline. Cifras simuladas sin datos internos.</div>';
+  return h;
+}
+
+function dBridge() {
+  var ctx = document.getElementById("bc");
+  if(!ctx||typeof Chart==="undefined") return;
+  var base = 5.8;
+  var total = base + BR.reduce(function(a,b){return a+b.v;}, 0);
+  var labels = ["Base 2024"].concat(BR.map(function(b){return b.l;})).concat(["Objetivo 2025"]);
+  var vals = [base].concat(BR.map(function(b){return b.v;})).concat([total]);
+  var colors = ["#4A6741"].concat(BR.map(function(b){return b.t==="pos"?"#639922":"#E24B4A";})).concat(["#C0272D"]);
+  ch = new Chart(ctx, {type:"bar",data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{label:function(c){return(c.raw>=0?"+":"")+" EUR "+c.raw.toFixed(1)+"M";}}}},
+    scales:{y:{ticks:{callback:function(v){return v.toFixed(1)+"M";},font:{size:10}},grid:{color:"rgba(0,0,0,0.04)"}},
+    x:{ticks:{font:{size:9},maxRotation:25},grid:{display:false}}}}});
+}
+
+function rAlerts() {
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  h += '<span style="font-size:15px;font-weight:700">Alertas de gestion</span>';
+  h += '<span class="badge br">'+AL.filter(function(a){return a.l==="r";}).length+' criticas</span>';
+  h += '<span class="badge ba">'+AL.filter(function(a){return a.l==="a";}).length+' seguimiento</span>';
+  h += '<span class="badge bg">'+AL.filter(function(a){return a.l==="g";}).length+' oportunidades</span></div>';
+  h += '<div class="card">';
+  AL.forEach(function(a){
+    h += '<div class="ar"><span class="dot" style="background:'+(a.l==="r"?"#E24B4A":a.l==="a"?"#EF9F27":"#639922")+'"></span>';
+    h += '<div style="flex:1"><div style="font-weight:700;margin-bottom:3px;font-size:13px">'+a.t+'</div>';
+    h += '<div style="font-size:11px;color:#888;display:flex;gap:12px">';
+    h += '<span>Owner: <strong style="color:#1C1C1C">'+a.o+'</strong></span><span>'+a.a+'</span></div></div>';
+    h += '<span class="badge '+(a.l==="r"?"br":a.l==="a"?"ba":"bg")+'">'+(a.l==="r"?"Urgente":a.l==="a"?"Revisar":"Capitalizar")+'</span></div>';
+  });
+  h += '</div>';
+  h += '<div class="disc">Panel alimentado de SAP con maestros limpios, escandallos reales y cierre mensual. Owner por alerta: CCO, CFO o COO.</div>';
+  return h;
+}
+
+render();
+</script>
+</body>
+</html>
